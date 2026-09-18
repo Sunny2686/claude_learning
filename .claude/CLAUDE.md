@@ -38,3 +38,24 @@ There is no build/lint step configured.
 
 - When implementing a new "Step" (auth, expense CRUD, etc.), check the placeholder route/comment in `app.py` or `database/db.py` first — it describes the expected shape of that step.
 - No auth/session mechanism exists yet; login/register currently only render forms without processing submissions.
+
+## Tech Constraints
+
+-**Flask Only** - no Fast Api, no Django, no other framework -**SQLite Only** - no PostgreSql, noSQLAlchemy ORM, no External DB -**Vanilam JS Only** - no react, no Jquery, no libraries. -**No new PIP Packages**- only use mentioned libraries in requirements, unless explicitly told otherwise
+
+## Warnings and things to avoid
+
+- **Never use raw string returns for stub routes** once a step is
+  implemented - always render a template
+- **Never hardcode URLs** in templates - always use `url_for()`
+- **Never put DB logic in route functions** - it belongs in `database/db.
+   py`
+- **Never install new packages** mid-feature without flagging it - keep
+  `requirements.txt` in sync
+- **Never use JS frameworks** - the frontend is intentionally vanilla
+- **`database/db.py` is currently empty** - do not assume helpers exist
+  until the step that implements them
+- **FK enforcement is manual** - SQLite foreign keys are off by default;
+  `get_db()` must run `PRAGMA foreign_keys = ON` on every connection
+- The app runs on **port 5001**, not the Flask default 5000 - don't
+  change this

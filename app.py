@@ -1,15 +1,28 @@
 import os
 import re
 import sqlite3
+from functools import wraps
 
-from flask import Flask, render_template, request, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-change-me")
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def login_required(view):
+    """Redirect signed-out visitors to the login page."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("user_id"):
+            flash("Please sign in to continue.", "info")
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
 
 
 # ------------------------------------------------------------------ #
@@ -23,6 +36,9 @@ def landing():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if session.get("user_id"):
+        return redirect(url_for("profile"))
+
     if request.method == "GET":
         return render_template("register.html")
 
@@ -56,9 +72,25 @@ def register():
     return redirect(url_for("login"))
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    if session.get("user_id"):
+        return redirect(url_for("profile"))
+
+    if request.method == "GET":
+        return render_template("login.html")
+
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+
+    user = get_user_by_email(email) if email else None
+    if user is None or not check_password_hash(user["password_hash"], password):
+        return render_template("login.html", error="Invalid email or password.", email=email), 401
+
+    session.clear()
+    session["user_id"] = user["id"]
+    session["user_name"] = user["name"]
+    return redirect(url_for("profile"))
 
 
 @app.route("/terms")
@@ -77,25 +109,32 @@ def privacy():
 
 @app.route("/logout")
 def logout():
-    return "Logout — coming in Step 3"
+    session.clear()
+    flash("You have been signed out.", "info")
+    return redirect(url_for("login"))
 
 
 @app.route("/profile")
+@login_required
 def profile():
-    return "Profile page — coming in Step 4"
+    # return "Profile page — coming in Step 4"
+    return render_template("landing.html")
 
 
 @app.route("/expenses/add")
+@login_required
 def add_expense():
     return "Add expense — coming in Step 7"
 
 
 @app.route("/expenses/<int:id>/edit")
+@login_required
 def edit_expense(id):
     return "Edit expense — coming in Step 8"
 
 
 @app.route("/expenses/<int:id>/delete")
+@login_required
 def delete_expense(id):
     return "Delete expense — coming in Step 9"
 

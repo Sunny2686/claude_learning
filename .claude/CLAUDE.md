@@ -29,15 +29,16 @@ There is no build/lint step configured.
 
 ## Architecture
 
-- `app.py` — single-file Flask app defining all routes. Currently only `/`, `/register`, and `/login` render templates (GET only, no form handling yet). `/logout`, `/profile`, `/expenses/add`, `/expenses/<id>/edit`, `/expenses/<id>/delete` are placeholder stubs returning plain strings — each is tagged with the Step number it belongs to (Step 3, 4, 7, 8, 9).
-- `database/db.py` — stub for Step 1. Intended to hold `get_db()` (SQLite connection with `row_factory` and foreign keys enabled), `init_db()` (creates tables via `CREATE TABLE IF NOT EXISTS`), and `seed_db()` (sample data for dev). Not yet implemented — the app has no persistence layer.
-- `templates/` — Jinja2 templates all extend `base.html`, which defines the shared nav/footer and pulls in `static/css/style.css` and `static/js/main.js`. `login.html` and `register.html` POST to `/login` and `/register` respectively, but those endpoints don't yet handle POST or sessions.
-- SQLite DB file is expected at the project root as `expense_tracker.db` (gitignored, created by `init_db()` once implemented).
+- `app.py` — single-file Flask app defining all routes. `/`, `/register`, `/login`, `/logout`, `/terms` and `/privacy` are implemented (register and login handle POST; login and logout use the Flask session). A `login_required` decorator redirects signed-out visitors to `/login`. `/profile`, `/expenses/add`, `/expenses/<id>/edit`, `/expenses/<id>/delete` are still placeholder stubs returning plain strings, guarded by `login_required` — each is tagged with the Step number it belongs to (Step 4, 7, 8, 9).
+- `database/db.py` — the data layer (Step 1 and later). Holds `get_db()` (SQLite connection with `row_factory` and foreign keys enabled), `init_db()` (creates tables via `CREATE TABLE IF NOT EXISTS`), `seed_db()` (demo user and sample expenses), plus `get_user_by_email()` and `create_user()` for auth.
+- `templates/` — Jinja2 templates all extend `base.html`, which defines the shared nav/footer (the nav changes with the signed-in state) and pulls in `static/css/style.css` and `static/js/main.js`. `login.html` and `register.html` POST to their own routes via `url_for()`.
+- `tests/` — pytest suite. `conftest.py` points `database.db.DB_PATH` at a temporary file so tests never touch `expense_tracker.db`.
+- SQLite DB file lives at the project root as `expense_tracker.db` (gitignored, created by `init_db()` on app start).
 
 ## Notes
 
 - When implementing a new "Step" (auth, expense CRUD, etc.), check the placeholder route/comment in `app.py` or `database/db.py` first — it describes the expected shape of that step.
-- No auth/session mechanism exists yet; login/register currently only render forms without processing submissions.
+- The session holds only `user_id` and `user_name`. Never put the email or password hash in it. `SECRET_KEY` comes from the environment; the fallback in `app.py` is for local development only.
 
 ## Tech Constraints
 
@@ -53,8 +54,8 @@ There is no build/lint step configured.
 - **Never install new packages** mid-feature without flagging it - keep
   `requirements.txt` in sync
 - **Never use JS frameworks** - the frontend is intentionally vanilla
-- **`database/db.py` is currently empty** - do not assume helpers exist
-  until the step that implements them
+- **Check `database/db.py` before assuming a helper exists** - only add
+  the helpers a step needs, and keep them parameterised
 - **FK enforcement is manual** - SQLite foreign keys are off by default;
   `get_db()` must run `PRAGMA foreign_keys = ON` on every connection
 - The app runs on **port 5001**, not the Flask default 5000 - don't

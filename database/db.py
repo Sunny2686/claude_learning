@@ -15,11 +15,11 @@ def get_db():
 
 
 def get_user_by_email(email):
-    """Return the user row (id, name, email) for an email, or None."""
+    """Return the user row (id, name, email, password_hash) for an email, or None."""
     conn = get_db()
     try:
         return conn.execute(
-            "SELECT id, name, email FROM users WHERE email = ?",
+            "SELECT id, name, email, password_hash FROM users WHERE email = ?",
             (email,),
         ).fetchone()
     finally:

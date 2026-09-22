@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Your Profile — Spendly{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-inner">
+
+        <div class="profile-header">
+            <h1 class="profile-title">{{ user.name }}</h1>
+            <p class="profile-email">{{ user.email }}</p>
+            <p class="profile-member-since">Member since {{ user.member_since }}</p>
+        </div>
+
+        <div class="profile-stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total spent</span>
+                <span class="stat-value">₹{{ "%.2f"|format(stats.total_spent) }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Transactions</span>
+                <span class="stat-value">{{ stats.transaction_count }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Top category</span>
+                <span class="stat-value">{{ stats.top_category }}</span>
+            </div>
+        </div>
+
+        <div class="profile-panels">
+
+            <div class="panel transactions-panel">
+                <h2 class="panel-title">Recent transactions</h2>
+                {% if transactions %}
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in transactions %}
+                        <tr>
+                            <td>{{ txn.date }}</td>
+                            <td>{{ txn.description }}</td>
+                            <td><span class="category-badge">{{ txn.category }}</span></td>
+                            <td class="amount-cell">₹{{ "%.2f"|format(txn.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="empty-state">No transactions yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="panel breakdown-panel">
+                <h2 class="panel-title">Category breakdown</h2>
+                {% if categories %}
+                <div class="breakdown-list">
+                    {% for cat in categories %}
+                    <div class="breakdown-row">
+                        <span class="breakdown-name">{{ cat.name }}</span>
+                        <div class="breakdown-bar-track">
+                            <div class="breakdown-bar" data-pct="{{ cat.pct }}"></div>
+                        </div>
+                        <span class="breakdown-amount">₹{{ "%.2f"|format(cat.amount) }}</span>
+                        <span class="breakdown-pct">{{ cat.pct }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-state">No spending yet.</p>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.querySelectorAll('.breakdown-bar').forEach(function (bar) {
+        bar.style.width = bar.dataset.pct + '%';
+    });
+</script>
+{% endblock %}

@@ -6,6 +6,12 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email
+from database.queries import (
+    get_user_by_id,
+    get_summary_stats,
+    get_recent_transactions,
+    get_category_breakdown,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-only-change-me")
@@ -117,8 +123,14 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
-    # return "Profile page — coming in Step 4"
-    return render_template("landing.html")
+    user_id = session["user_id"]
+    return render_template(
+        "profile.html",
+        user=get_user_by_id(user_id),
+        stats=get_summary_stats(user_id),
+        transactions=get_recent_transactions(user_id),
+        categories=get_category_breakdown(user_id),
+    )
 
 
 @app.route("/expenses/add")

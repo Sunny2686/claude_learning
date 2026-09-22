@@ -8,7 +8,7 @@ PASSWORD = "longenough1"
 NAME = "Asha Rao"
 
 PROTECTED = [
-    ("/profile", b"Profile page"),
+    ("/profile", b"Asha Rao"),
     ("/expenses/add", b"Add expense"),
     ("/expenses/1/edit", b"Edit expense"),
     ("/expenses/1/delete", b"Delete expense"),
